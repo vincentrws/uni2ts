@@ -242,6 +242,195 @@ predictor = model.create_predictor(batch_size=32)
 - (-) May require more data
 - (-) Less natural for sequential generation
 
+### 6. Multi-Architecture Variant Design
+
+**Decision**: Support three different MOIRAI architectures optimized for different trade-offs.
+
+**Moirai-1.0/1.1-R**: Full probabilistic forecasting
+- Multi-patch size projections for frequency adaptation
+- Transformer with binary attention bias and rotary embeddings
+- Mixture distribution output providing full uncertainty quantification
+- Complete training pipeline (pretrain, finetune, forecast)
+
+**Moirai-MoE-1.0-R**: Efficient capacity scaling
+- Mixture-of-Experts routing for conditional computation
+- Enhanced feature processing with residual projections
+- Autocorrective inference with causal attention masking
+- Expert specialization for improved efficiency/cost ratio
+
+**Moirai-2.0-R**: Deterministic and efficient
+- Single patch size with simplified projections
+- Direct quantile regression without distribution sampling
+- Recursive forecasting for long horizons
+- Optimized for production deployment and low latency
+
+**Rationale**:
+- Single architecture cannot serve all use cases effectively
+- Different applications prioritize speed vs. accuracy vs. uncertainty
+- Provides flexibility for researchers and practitioners
+
+**Trade-offs**:
+- (+) Serves diverse deployment needs
+- (+) Allows optimization for specific scenarios
+- (+) Provides migration paths and feature experiments
+- (-) Increases complexity and maintenance burden
+- (-) Users must select appropriate variant for use case
+
+### 7. Data Pipeline Layering
+
+**Builder Pattern**: Dataset construction abstractions
+```python
+# Dataset creation (CSV → HuggingFace)
+builder = SimpleDatasetBuilder(dataset="mydata")
+builder.build_dataset("data.csv", dataset_type="wide")
+
+# Multi-dataset combination
+combined = ConcatDatasetBuilder([builder1, builder2])
+dataset = combined.load_dataset(transform_map)
+```
+
+**Indexer Pattern**: Random access and efficient retrieval
+```python
+# HuggingFace dataset indexing
+indexer = HuggingFaceDatasetIndexer(dataset, uniform=True)
+
+# Fast sequential/random access
+batch = indexer[0:32]  # Slicing support
+batch = indexer[[5, 12, 25]]  # Arbitrary indices
+```
+
+**Transform Chain**: Declarative data preprocessing
+```python
+# Composable transformation pipeline
+transform = (
+    AddTimeIndex()
+    .chain(Patch(patch_size=32))
+    .chain(Pack(scaler="std"))
+)
+```
+
+**Rationale**:
+- Separation of concerns between data ingestion, access, and processing
+- Streamlined pipeline enables reproducibility and debugging
+- Pattern enables extensibility for new data formats and models
+
+### 8. Attention Mechanism Variations
+
+**Binary Attention Bias**: Same/different variate relationships
+- Learned attention masks between time series variables
+- Enables cross-variate information flow
+- Scalable to high-dimensional multivariate data
+
+**Causal Attention**: Temporal coherence for generation
+- Prevents future information leakage
+- Enables autoregressive and autocorrective patterns
+- Critical for MoE's iterative refinement inference
+
+**Rotary Position Embeddings**: Time-aware positioning
+- Relative temporal distances in attention
+- Better handling of variable frequencies
+- Improved long-range dependencies
+
+### 6. Collective OHLC Normalization (StockMarket-MOIRAI)
+
+**Decision**: For financial OHLCV data, normalize Open+High+Low+Close collectively while keeping Volume separate.
+
+**Rationale**:
+- OHLC represent the same underlying asset price during a time period
+- Collective normalization preserves relative relationships between price components
+- Volume has different distribution and scale than prices
+
+**Implementation**:
+```python
+class CollectiveOHLCScaler(PackedScaler):
+    """
+    Normalize OHLC collectively (shared mean/std) but Volume separately.
+    
+    Args:
+        ohlc_indices: List of indices for OHLC columns [0,1,2,3]
+        volume_indices: List of indices for Volume columns [4]
+    """
+    def fit(self, data):
+        # Compute single mean/std across all OHLC variates
+        ohlc_data = data[..., self.ohlc_indices]  # [..., 4]
+        self.ohlc_mean = ohlc_data.mean(dim=(-2, -1), keepdim=True)
+        self.ohlc_std = ohlc_data.std(dim=(-2, -1), keepdim=True)
+        
+        # Volume normalization (IndividualStdScaler behavior)
+        volume_data = data[..., self.volume_indices]
+        self.vol_mean = volume_data.mean(dim=-2, keepdim=True)
+        self.vol_std = volume_data.std(dim=-2, keepdim=True)
+    
+    def transform(self, data):
+        # Apply collective transform to OHLC
+        data[..., self.ohlc_indices] = (
+            data[..., self.ohlc_indices] - self.ohlc_mean
+        ) / self.ohlc_std
+        
+        # Apply individual transform to Volume
+        data[..., self.volume_indices] = (
+            data[..., self.volume_indices] - self.vol_mean
+        ) / self.vol_std
+        
+        return data
+```
+
+### 7. Semantic Attention Bias (StockMarket-MOIRAI)
+
+**Decision**: Extend binary attention from "same/different variate" to semantic type relationships for OHLCV.
+
+**Rationale**:
+- OHLC have different semantic roles (Close is target, Open is reference)
+- Volume provides context but different from price information
+- Learned type relationships can capture financial domain knowledge
+
+**Implementation**:
+```python
+class SemanticAttentionBias(nn.Module):
+    """
+    Learn attention patterns between OHLCV semantic types.
+    
+    Type IDs:
+    - 0: Close (target price, most important)
+    - 1: Open (reference price)
+    - 2: High (range upper bound)
+    - 3: Low (range lower bound)
+    - 4: Volume (trading volume)
+    """
+    
+    def __init__(self, num_types=5, hidden_dim=64):
+        super().__init__()
+        self.type_embeddings = nn.Embedding(num_types, hidden_dim)
+        self.bias_network = nn.Sequential(
+            nn.Linear(hidden_dim * 2, hidden_dim),
+            nn.ReLU(),
+            nn.Linear(hidden_dim, 1)  # Output single bias value
+        )
+    
+    def forward(self, query_ids, key_ids):
+        """
+        Args:
+            query_ids: [batch, seq_len] - semantic type IDs
+            key_ids: [batch, seq_len] - semantic type IDs
+        """
+        query_emb = self.type_embeddings(query_ids)  # [batch, seq_len, hidden]
+        key_emb = self.type_embeddings(key_ids)      # [batch, seq_len, hidden]
+        
+        # Compute pairwise type relationships
+        bias_matrix = torch.zeros(batch, seq_len, seq_len)
+        for i in range(seq_len):
+            for j in range(seq_len):
+                pair_emb = torch.cat([query_emb[:, i], key_emb[:, j]], dim=-1)
+                bias_matrix[:, i, j] = self.bias_network(pair_emb).squeeze(-1)
+        
+        return bias_matrix
+```
+
+**Benefits**:
+- Model learns that Close↔Close interactions are important
+- Open provides reference context for Close predictions
+- Volume gets appropriate attention weight relative to prices
+
 ## Component Relationships
 
 ### Model Architecture

@@ -2,137 +2,145 @@
 
 ## Project Identity
 
-**Name**: MOIRAI (Masked Encoder-based UnIveRsAl TIme Series Forecasting Transformer)
+**Name**: StockMarket-MOIRAI (Fine-tuned MOIRAI for OHLCV Price Forecasting)
 
-**Organization**: Salesforce AI Research
+**Organization**: Independent Project (Forked from Salesforce AI Research)
 
-**Type**: Universal Time Series Foundation Model Research Library
+**Type**: Specialized Financial Time Series Forecasting Model
 
 **Primary Language**: Python 3.10+
 
-**Framework**: PyTorch
+**Framework**: PyTorch + MOIRAI Foundation Model
 
 ## Core Purpose
 
-MOIRAI is a production-grade PyTorch library for universal time series forecasting that implements a transformer-based foundation model. It enables zero-shot forecasting across diverse domains, frequencies, and multivariate scenarios without requiring task-specific training.
+This project fine-tunes the MOIRAI universal time series foundation model specifically for predicting stock market prices using OHLCV (Open, High, Low, Close, Volume) data. It adapts the general-purpose forecasting architecture to understand financial market semantic relationships, with particular focus on directional price movement accuracy for trading applications.
 
 ## Vision
 
-To establish a universal time series forecasting model that can handle any frequency, any number of variates, and diverse distributional properties in a zero-shot capacity, democratizing access to state-of-the-art time series forecasting capabilities.
+To create a specialized financial forecasting model that excels at stock market prediction by leveraging the universal foundation of MOIRAI while incorporating financial-domain specific knowledge about OHLCV relationships, normalization strategies, and market-aware attention mechanisms.
 
 ## Core Requirements
 
 ### Functional Requirements
 
-1. **Universal Forecasting Capability**
-   - Support any frequency (yearly to second-level)
-   - Handle any number of variates (univariate to highly multivariate)
-   - Support diverse distributional properties through mixture distributions
+1. **OHLCV Forecasting Capability**
+   - Specialized prediction of Close price using OHLCV context
+   - Handle 5-minute to daily frequency financial data
+   - Collective normalization for OHLC prices (shared mean/std across Open, High, Low, Close)
+   - Individual normalization for Volume
 
-2. **Model Variants**
-   - Moirai-1.0-R: Original multi-patch architecture
-   - Moirai-MoE-1.0-R: Mixture-of-Experts variant
-   - Moirai-2.0-R: Simplified deterministic architecture
+2. **Financial Market Adaptations**
+   - Semantic attention bias understanding OHLCV relationships
+   - Directional accuracy optimization over exact price prediction
+   - Support for financial data gaps and corporate actions
+   - Market regime awareness (bull/bear/sideways markets)
 
-3. **Training Capabilities**
-   - Pre-training on LOTSA dataset (27B+ observations)
-   - Fine-tuning on custom datasets
+3. **Fine-tuning Infrastructure**
+   - Load pre-trained MOIRAI models from HuggingFace Hub
+   - Custom fine-tuning on OHLCV datasets
+   - Incorporation of CollectiveOHLCScaler and SemanticAttentionBias
    - Support for masked encoder training objective
 
-4. **Inference & Evaluation**
-   - Zero-shot forecasting without fine-tuning
-   - Rolling window evaluation
-   - Comprehensive metrics (MSE, MASE, CRPS, etc.)
-   - Integration with GluonTS for inference
+4. **Financial Evaluation & Inference**
+   - Directional accuracy metrics (>50% baseline)
+   - Rolling window evaluation on financial time series
+   - Integration with GluonTS for production inference
+   - Backtesting framework for trading strategy validation
 
-5. **Data Handling**
-   - Support for wide and long format data
-   - Automatic data preprocessing and transformation
-   - Efficient sequence packing for training
-   - Integration with HuggingFace datasets
+5. **Financial Data Handling**
+   - Parquet file format support for OHLCV data
+   - Validation of column structure (ts, open, high, low, close, volume)
+   - Handling of market hours gaps and missing data
+   - Corporate action adjustments and data quality checks
 
 ### Non-Functional Requirements
 
 1. **Performance**
-   - Efficient training with <0.4% padding waste via sequence packing
-   - Scalable to billions of observations
-   - Support for distributed training
+   - Efficient fine-tuning with optimized batch sizes for financial data
+   - GPU acceleration for real-time inference
+   - Memory optimization for high-frequency data processing
 
 2. **Flexibility**
-   - Modular design allowing component swapping
-   - Configurable via Hydra YAML files
-   - Extensible architecture for new distributions/transforms
+   - Modular design allowing component swapping for financial features
+   - Configurable via Hydra YAML files for different market types
+   - Extensible architecture for additional technical indicators
 
 3. **Usability**
-   - Command-line interface for common tasks
-   - Python API for programmatic usage
-   - Jupyter notebook examples
-   - Clear documentation and type hints
+   - Command-line interface optimized for financial workflows
+   - Python API for programmatic trading strategy development
+   - Jupyter notebook examples for financial analysis
+   - Clear documentation with financial market examples
 
 4. **Reproducibility**
-   - Fixed seeds for deterministic training
-   - Version control integration
-   - HuggingFace Hub for model weights
+   - Fixed seeds for deterministic financial model training
+   - Version control integration for model deployment
+   - Model checkpointing for production deployment
 
 ## Success Criteria
 
-1. **Research Impact**
-   - Publication in top-tier conferences (ICML 2024 Oral)
-   - Competitive performance on standard benchmarks (Monash, LSF, PF)
-   - Citation and adoption by research community
+1. **Financial Prediction Accuracy**
+   - Directional accuracy >55% on OHLCV data (vs 50% random baseline)
+   - Consistent performance across different market regimes (bull/bear/sideways)
+   - Superior directional accuracy compared to unmodified MOIRAI
 
 2. **Practical Utility**
-   - Zero-shot performance competitive with task-specific models
-   - Successful deployment in production scenarios
-   - Active community contribution and usage
+   - Effective OHLCV normalization strategy (CollectiveOHLCScaler)
+   - Semantic attention bias implementation for financial understanding
+   - Successful deployment in financial trading strategies
+   - Active community contribution and financial domain adoption
 
 3. **Code Quality**
-   - Comprehensive test coverage
-   - Type safety with jaxtyping
-   - Clean modular architecture
-   - Extensive documentation
+   - Comprehensive test coverage for financial components
+   - Type safety with jaxtyping for tensor operations
+   - Clean modular architecture with financial-specific modules
+   - Comprehensive documentation with financial examples
 
 ## Target Users
 
-1. **Researchers**: Time series forecasting researchers exploring foundation models
-2. **Data Scientists**: Practitioners needing robust forecasting solutions
-3. **Engineers**: Developers integrating forecasting into production systems
-4. **Students**: Learners studying advanced time series forecasting techniques
+1. **Quantitative Analysts**: Financial professionals needing advanced stock price prediction
+2. **Algorithmic Traders**: Developers creating automated trading strategies
+3. **Financial Data Scientists**: Practitioners analyzing market data with ML
+4. **Finance Researchers**: Academics studying market prediction and forecasting
+5. **Fintech Engineers**: Developers building financial technology solutions
 
 ## Key Constraints
 
 1. **Technical**
    - Python 3.10+ required
    - PyTorch 2.1-2.4 compatibility
-   - GPU/TPU support for training large models
-   - Substantial compute resources for pre-training
+   - GPU support for fine-tuning and inference
+   - Financial data processing memory requirements
 
 2. **Data**
-   - LOTSA dataset requires significant storage (~27B observations)
-   - Custom data must be preprocessed to compatible format
-   - Path management via `.env` file
+   - OHLCV data in Parquet format with consistent column structure
+   - Handling of financial market gaps (nights/weekends)
+   - Data quality checks for erroneous bars and corporate actions
+   - Market condition diversity (bull/bear/sideways periods)
 
-3. **Licensing**
-   - Apache 2.0 license
-   - Research use only (not evaluated for all downstream purposes)
-   - Ethical considerations for deployment
+3. **Regulatory & Ethical**
+   - Financial regulatory compliance for trading applications
+   - Ethical use in algorithmic trading systems
+   - Transparency requirements for financial models
+   - Risk management considerations
 
 ## Project Scope
 
 ### In Scope
-- Core transformer model implementations
-- Training and evaluation pipelines
-- Data loading and preprocessing
-- CLI tools for common workflows
-- Example notebooks and documentation
-- Model weights distribution via HuggingFace
+- Fine-tuning MOIRAI on OHLCV stock data
+- Collective OHLC normalization implementation
+- Semantic attention bias for financial relationships
+- Directional accuracy metrics and evaluation
+- Backtesting framework for trading strategies
+- Financial data processing pipeline
+- Integration with trading platforms and APIs
 
 ### Out of Scope
-- Real-time streaming inference
-- Multi-modal extensions (text/image integration)
-- Automated hyperparameter tuning
-- Production deployment tooling
-- Edge device optimization
+- Real-time market trading execution
+- Multi-modal financial analysis (news/text + OHLCV)
+- Automated deployment to trading infrastructures
+- Regulatory compliance frameworks
+- Edge device deployment for retail traders
 
 ## Related Work
 
@@ -140,11 +148,13 @@ To establish a universal time series forecasting model that can handle any frequ
 - **TimesFM**: Google's time series foundation model
 - **VisionTS**: Vision transformer for time series
 - **GIFT-Eval**: General time series forecasting benchmark
+- **Financial Domain**: QLSTM, LSTM-based trading models, ARIMA financial variants
 
 ## Current Status
 
-The project is mature and actively maintained with:
-- Multiple published papers (Moirai, Moirai-MoE, GIFT-Eval)
-- Production-ready codebase
-- Active community engagement
-- Regular model updates (Moirai-1.1-R, Moirai-2.0-R)
+The project is in active development focusing on financial specialization:
+- Research papers published on original MOIRAI foundation model
+- Forked repository with OHLCV fine-tuning capabilities
+- Implementation of CollectiveOHLCScaler and SemanticAttentionBias planned
+- Active development of financial evaluation metrics
+- Integration with trading strategy backtesting frameworks

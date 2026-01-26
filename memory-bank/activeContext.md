@@ -2,38 +2,50 @@
 
 ## Current Work Focus
 
-As of January 2026, the MOIRAI project is in a mature, production-ready state with active maintenance and ongoing research.
+As of January 2026, the StockMarket-MOIRAI project is focused on adapting the universal MOIRAI foundation model for specialized OHLCV stock market price prediction.
 
 ### Active Projects
 
-#### 1. Moirai-2.0-R Development
-- **Status**: Released (August 2025)
-- **Model Size**: Small variant released
-- **Architecture**: Simplified from Moirai-1.0-R with fixed patch size (16)
-- **Output**: Deterministic quantile regression (no num_samples parameter)
-- **Focus**: Improved interpretability and performance
+#### 1. GroupedPackedStdScaler Implementation
+- **Status**: Completed (January 2026)
+- **Problem**: MOIRAI's PackedStdScaler normalizes each variate independently, but OHLC should be normalized collectively
+- **Solution**: Implemented `GroupedPackedStdScaler` that computes collective mean/std across arbitrarily grouped variates using a group partition mapping
+- **Location**: `src/uni2ts/module/packed_scaler.py`
+- **Tests**: Comprehensive test coverage in `test/module/test_packed_scaler.py` including specific OHLCV configuration
+- **Usage**: `GroupedPackedStdScaler(torch.tensor([0, 0, 0, 0, 1]))` groups the first 4 variates (OHLC) together for collective normalization, while the 5th (Volume) remains independent.
 
-#### 2. OHLCV Forecasting Implementation
-- **Status**: In Planning (January 2026)
-- **Approach**: Univariate target (Close) with dynamic covariates (OHLV)
-- **Architecture**: feat_dynamic_real and past_feat_dynamic_real features
-- **Key Decision**: NOT multivariate forecasting - uses covariate features instead
-- **Rationale**: Avoids look-ahead bias, uses past OHLV to predict future Close
+#### 2. SemanticAttentionBias for OHLCV
+- **Status**: Planned (January 2026)
+- **Problem**: Binary attention bias (same/different variate) doesn't capture OHLCV semantics
+- **Solution**: Implement type IDs (close=1, open=2, high=3, low=4, volume=5) with learned type relationships
+- **Benefits**: Model learns that OHLC are related prices vs. Volume being separate context
 
-#### 2. Moirai-MoE Research
-- **Status**: Published (October 2024)
-- **Model Variants**: Small, Base
-- **Architecture**: Mixture-of-Experts for sparse activation
-- **Key Innovation**: Expert routing for improved efficiency
-- **Performance**: Competitive with larger dense models
+#### 3. Directional Accuracy Loss Function
+- **Status**: In Development (January 2026)
+- **Problem**: Standard NLL loss optimizes exact prediction, traders care about direction
+- **Solution**: Add directional component to loss function with configurable weight
+- **Metrics**: Directional accuracy (>50% baseline), market regime awareness
 
-#### 3. GIFT-Eval Benchmark
-- **Status**: Active (November 2024)
-- **Purpose**: General time series forecasting model evaluation
-- **Platform**: HuggingFace Spaces leaderboard
-- **Goal**: Standardized evaluation across foundation models
+#### 4. OHLCV Data Pipeline
+- **Status**: Active (January 2026)
+- **Challenge**: 5-minute OHLCV data with market gaps, corporate actions, missing bars
+- **Solutions**: Parquet support, gap filling, action adjustments, validation
+- **Focus**: Robust preprocessing pipeline for financial data quality
 
 ## Recent Changes
+
+### January 2026
+- **Comprehensive Module Documentation** - Created detailed .md files for key modules
+  - `builder.md`: Dataset construction and loading patterns (HuggingFace integration, LOTSA support)
+  - `indexer.md`: Data indexing abstractions (PyArrow optimization, sequence access patterns)
+  - `moirai.md`: Original MOIRAI 1.0/1.1 (multi-patch, mixture distributions, full training pipeline)
+  - `moirai_moe.md`: MoE variant with expert routing and autocorrective inference
+  - `moirai2.md`: Simplified quantile regression variant with recursive forecasting
+- **PackedMidRangeScaler** implemented for custom normalization ranges
+  - Added to `src/uni2ts/module/packed_scaler.py`
+  - Implements `(x - mid) / range` formula
+  - Useful for technical indicators with known value ranges
+  - Comprehensive test coverage added to `test/module/test_packed_scaler.py`
 
 ### August 2025
 - **Moirai-2.0-R-small** released on HuggingFace Hub
@@ -59,56 +71,64 @@ As of January 2026, the MOIRAI project is in a mature, production-ready state wi
 
 ## Next Steps
 
-### Immediate Priorities
+### Immediate Priorities (Q1 2026)
 
-1. **Documentation Enhancement**
-   - Expand tutorial documentation for new users
-   - Add more real-world use case examples
-   - Improve API reference documentation
+1. **CollectiveOHLCScaler Implementation**
+   - Complete `CollectiveOHLCScaler` class in `packed_scaler.py`
+   - Integrate into MOIRAI data pipeline
+   - Test with actual OHLCV data samples
+   - Document usage patterns for financial data
 
-2. **Model Performance**
-   - Benchmark Moirai-2.0-R on standard datasets
-   - Compare performance across all model variants
-   - Publish comprehensive results
+2. **OHLCV Data Pipeline Development**
+   - Implement Parquet file loader with column validation
+   - Add corporate action handling (splits, dividends)
+   - Create market gap filling strategies
+   - Validate pipeline with multiple asset examples
 
-3. **Community Engagement**
-   - Respond to GitHub issues and PRs
-   - Encourage community contributions
-   - Update GIFT-Eval leaderboard with new models
+3. **Directional Accuracy Metrics**
+   - Implement directional accuracy evaluation function
+   - Add market regime-aware metrics
+   - Create backtesting integration points
+   - Establish baseline performance targets
 
-### Medium-Term Goals
+### Medium-Term Goals (Q2 2026)
 
-1. **Feature Expansion**
-   - Explore multi-modal extensions (text + time series)
-   - Investigate real-time streaming inference
-   - Add automated hyperparameter tuning
+1. **SemanticAttentionBias Architecture**
+   - Extend attention mechanism for OHLCV type relationships
+   - Implement semantic type embeddings
+   - Train with weighted attention on price relationships
+   - Validate attention pattern learning
 
-2. **Model Optimization**
-   - Implement model quantization for edge deployment
-   - Optimize for CPU inference
-   - Reduce model size while maintaining performance
+2. **Financial Fine-tuning Framework**
+   - Develop curriculum learning for OHLCV data
+   - Implement directional-aware loss functions
+   - Create specialized training configurations
+   - Benchmark against existing financial models
 
-3. **Integration**
-   - Official support for cloud platforms (AWS, GCP, Azure)
-   - Containerized deployment guides
-   - API service for remote inference
+3. **Production Integration**
+   - Add trading platform API integrations
+   - Implement real-time inference pipelines
+   - Create streaming OHLCV data adapters
+   - Develop risk management overlays
 
-### Long-Term Vision
+### Long-Term Vision (2027+)
 
-1. **Next-Generation Models**
-   - Explore latent diffusion architectures
-   - Investigate causal transformer improvements
-   - Multi-modal time series foundation models
+1. **Multi-Asset Portfolio Forecasting**
+   - Extend to multi-stock or portfolio-level predictions
+   - Cross-asset correlation modeling
+   - Market-sector aware attention mechanisms
 
-2. **Enterprise Features**
-   - Scalable serving infrastructure
-   - Monitoring and observability tools
-   - A/B testing framework for model comparison
+2. **Advanced Financial Features**
+   - Technical indicator integration as additional variates
+   - Order book and flow data incorporation
+   - Options pricing and volatility surface modeling
+   - Alternative data sources integration
 
-3. **Ecosystem Development**
-   - Third-party integrations
-   - Plugin system for custom distributions
-   - Marketplace for fine-tuned models
+3. **Enterprise Deployment**
+   - Regulatory compliance frameworks
+   - Model explainability for financial decisions
+   - High-frequency trading optimizations
+   - Cloud-native deployment architectures
 
 ## Active Decisions
 
@@ -257,10 +277,16 @@ python -m cli.train ...  # May not find installed packages
 
 ### Common Pitfalls
 
-1. **Forgetting Virtual Environment**
-   - Error: ModuleNotFoundError, import errors
-   - Solution: Always activate venv before commands
-   - Tip: Add reminder to shell prompt or git hook
+1. **Forgetting Virtual Environment** 🚨 CRITICAL 🚨
+   - **Error**: ModuleNotFoundError, import errors, "uni2ts package not found"
+   - **Solution**: Always run `source venv/bin/activate` before any MOIRAI commands
+   - **Example**: 
+     ```bash
+     # Terminal shows: opt/uni2ts$
+     source venv/bin/activate  # Now shows: (venv) opt/uni2ts$
+     python -m cli.train ...  # Will work
+     ```
+   - **Tip**: Commands WILL FAIL without activation. Always check for (venv) in prompt.
 
 2. **Incorrect Patch Size**
    - Error: Poor performance, wasted compute
@@ -381,44 +407,3 @@ python -m cli.train ...  # May not find installed packages
 3. **Documentation**: Clear docstrings and comments
 4. **Performance**: No regressions
 5. **Style**: Consistent with project standards
-
-### Issue Resolution
-
-1. **Bug Reports**: Provide minimal reproducible example
-2. **Feature Requests**: Explain use case and benefits
-3. **Questions**: Search existing issues first
-4. **Documentation**: Specify what's unclear or missing
-
-## External Resources
-
-### Official Documentation
-- GitHub: https://github.com/SalesforceAIResearch/uni2ts
-- HuggingFace Models: https://huggingface.co/collections/Salesforce/moirai-r-models-65c8d3a94c51428c300e0742
-- GIFT-Eval Leaderboard: https://huggingface.co/spaces/Salesforce/GIFT-Eval
-
-### Research Papers
-- Moirai (ICML 2024): https://arxiv.org/abs/2402.02592
-- Moirai-MoE: https://arxiv.org/abs/2410.10469
-- GIFT-Eval: https://arxiv.org/abs/2410.10393
-
-### Related Projects
-- GluonTS: https://github.com/awslabs/gluonts
-- PyTorch Lightning: https://pytorchlightning.ai/
-- Hydra: https://hydra.cc/
-
-## Support Channels
-
-- **GitHub Issues**: Bug reports and feature requests
-- **GitHub Discussions**: Questions and community support
-- **Email**: Contact Salesforce AI Research team (for enterprise inquiries)
-
-## Ethical Considerations
-
-MOIRAI is released for research purposes only. Users should:
-- Evaluate models for specific use cases
-- Consider accuracy, safety, and fairness implications
-- Comply with applicable laws and regulations
-- Implement safeguards for high-risk applications
-- Follow AI usage policies and best practices
-
-See AI_ETHICS.md for detailed guidance.

@@ -99,6 +99,79 @@
 - **subseasonal-data**
   - Subseasonal forecasting data
 
+#### Model Variant-Specific
+- **GluonTS [=0.14.3]**
+  - Production inference for Moirai-1.0/1.1-R and MoE variants
+  - Probabilistic forecasting with uncertainty quantification
+  - Standard time series evaluation metrics
+
+## Model Variant Usage Patterns
+
+### Moirai-1.0/1.1-R (Original)
+```python
+# Full probabilistic forecasting with uncertainty
+from uni2ts.model.moirai import MoiraiForecast, MoiraiModule
+
+model = MoiraiForecast(
+    module=MoiraiModule.from_pretrained("Salesforce/moirai-1.1-R-small"),
+    prediction_length=96,
+    context_length=512,
+    patch_size=32,  # Auto-selection supported
+    num_samples=100,  # Uncertainty sampling
+)
+# Returns Distribution objects with confidence intervals
+```
+
+### Moirai-MoE-1.0-R (Expert Routing)
+```python
+# Mixture-of-Experts with efficient scaling
+from uni2ts.model.moirai_moe import MoiraiMoEForecast, MoiraiMoEModule
+
+model = MoiraiMoEForecast(
+    module=MoiraiMoEModule.from_pretrained("Salesforce/moirai-moe-1.0-R-small"),
+    prediction_length=96,
+    context_length=512,
+    patch_size=32,  # Fixed for MoE stability
+    num_samples=100,
+)
+# Autocorrective inference for higher accuracy
+```
+
+### Moirai-2.0-R (Deterministic Quantile)
+```python
+# Fast deterministic forecasting
+from uni2ts.model.moirai2 import Moirai2Forecast, Moirai2Module
+
+model = Moirai2Forecast(
+    module=Moirai2Module(quantile_levels=[0.1, 0.5, 0.9]),
+    prediction_length=96,
+    context_length=512,
+)
+# Returns quantile arrays directly, no sampling required
+```
+
+### Configuration Complexity Rankings
+
+```
+Moirai-1.0/1.1-R: High complexity
+├── Multi-patch size selection (auto/manual)
+├── Distribution parameter tuning
+├── Batch size optimization
+└── Sequence packing configuration
+
+Moirai-MoE-1.0-R: Very High complexity
+├── Expert routing optimization
+├── Feed-forward dimension scaling
+├── Causal attention coordination
+└── Autocorrective hyperparameters
+
+Moirai-2.0-R: Low complexity
+├── Fixed patch size
+├── Quantile level specification
+├── Recursive depth configuration
+└── Simple deterministic operation
+```
+
 ## Development Setup
 
 ### Installation
@@ -201,20 +274,28 @@ uni2ts/
 
 ### Data Constraints
 
+#### Financial Data Support
+- **Parquet Format**: Primary format for OHLCV data with efficient columnar storage
+- **Column Structure**: Standard financial bars (ts, open, high, low, close, volume)
+- **Missing Data**: Corporate action adjustments and gap filling support
+
 #### Sequence Length
 - **Maximum**: 512 tokens (patches)
 - **Context**: Variable, typically 200-1000 patches
 - **Horizon**: Variable, typically 20-200 patches
+- **Financial**: 5-minute data context ≈ 2 days (512 patches at size 32)
 
 #### Patch Sizes
 - **Supported**: 8, 16, 32, 64, 128
 - **Selection**: Based on frequency
 - **Auto-selection**: Available for Moirai-1.0-R
+- **Financial**: 32 recommended for 5-minute data (2.67 hour patches)
 
 #### Batch Size
 - **Training**: 32-128 depending on GPU memory
 - **Inference**: 32-256 for efficiency
 - **Packing**: Affects effective batch size
+- **Financial**: Optimized for OHLCV data processing
 
 ## Tool Usage Patterns
 

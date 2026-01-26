@@ -1,10 +1,10 @@
-# MOIRAI Project Progress
+# StockMarket-MOIRAI Project Progress
 
 ## Current Status (January 2026)
 
-**Overall Status**: ✅ Production Ready - Mature and Actively Maintained
+**Overall Status**: 🔄 Active Development - Financial Specialization Phase
 
-The MOIRAI project is in a stable, production-ready state with all core functionality implemented and tested. The codebase is mature, well-documented, and actively maintained by the Salesforce AI Research team.
+The StockMarket-MOIRAI project is actively adapting the universal MOIRAI foundation model for specialized OHLCV stock market price prediction. Core financial adaptations are under development, building on the mature MOIRAI architecture.
 
 ## What Works
 
@@ -50,7 +50,7 @@ The MOIRAI project is in a stable, production-ready state with all core function
   - Observed mask handling
   - Patching (multiple patch sizes)
   - Sequence packing
-  - Normalization (std scaling)
+  - Normalization (std scaling, abs-mean scaling, mid-range custom scaling)
   - Imputation support
 - ✅ **Data Builder**: Easy dataset preparation
   - Simple command-line tool
@@ -144,66 +144,78 @@ The MOIRAI project is in a stable, production-ready state with all core function
 
 ### 🚧 High Priority
 
-#### Documentation Enhancements
-- ⚠️ More beginner-friendly tutorials
-- ⚠️ API reference completeness
-- ⚠️ Troubleshooting guide expansion
-- ⚠️ Video tutorials or walkthroughs
-- ⚠️ OHLCV forecasting tutorial with dynamic features
+#### OHLCV Core Components
+- 🚧 CollectiveOHLCScaler implementation
+  - Complete `CollectiveOHLCScaler` class in `packed_scaler.py`
+  - Handle OHLC collective normalization, Volume separate
+  - Unit tests and validation
+- 🚧 SemanticAttentionBias for OHLCV
+  - Extend binary attention to semantic type relationships
+  - Implement type IDs for O, H, L, C, V (close=1, open=2, ...)
+  - Learned embeddings for financial relationships
 
-#### Example Notebooks
-- ✅ Fixed moirai_forecast_pandas.ipynb (January 2026)
-  - Removed num_samples from Moirai2Forecast (API mismatch)
-  - Updated all 4 cells with moirai2 cases
-  - Added missing moirai2 case to dynamic features section
-- ⚠️ Create OHLCV forecasting example notebook
-  - Use past_feat_dynamic_real for historical OHLV
-  - Use feat_dynamic_real for calendar/time features
-  - Demonstrate no look-ahead bias approach
+#### Financial Data Pipeline
+- 🚧 Parquet OHLCV loader
+  - Column validation (ts, open, high, low, close, volume)
+  - Corporate action handling (splits, dividends)
+  - Market gap filling for nights/weekends
+- 🚧 OHLCV transformation chain
+  - Integrate CollectiveOHLCScaler into pipeline
+  - Add market-aware time series handling
 
-#### Error Handling
-- ⚠️ Better error messages for common issues
-- ⚠️ Input validation with helpful suggestions
-- ⚠️ Configuration validation
-- ⚠️ Graceful degradation for edge cases
+#### Directional Accuracy Framework
+- 🚧 Directional metrics implementation
+  - Direction accuracy (>50% baseline)
+  - Multi-step directional consistency
+  - Market regime-aware evaluation
+- 🚧 Directional loss function
+  - Add directional component to NLL loss
+  - Configurable weights for direction vs. exact values
 
 ### 📋 Medium Priority
 
-#### Performance Optimizations
-- ⚠️ ONNX export for optimized CPU inference
-- ⚠️ Model quantization for edge deployment
-- ⚠️ Flash attention optimization
-- ⚠️ Compiled model improvements
+#### Financial Evaluation & Backtesting
+- ⚠️ Backtesting framework
+  - Simple trading simulation for directional signals
+  - Performance metrics (Sharpe ratio, max drawdown)
+  - Market-aware validation splits
+- ⚠️ Cross-market validation
+  - Performance across bull/bear/sideways regimes
+  - Multiple asset classes (stocks, futures, forex)
 
-#### Feature Additions
-- ⚠️ Automated hyperparameter tuning integration
-- ⚠️ Multi-modal extensions (text + time series)
-- ⚠️ Real-time streaming inference
-- ⚠️ Custom distribution plugin system
+#### Production Integration
+- ⚠️ Trading platform APIs
+  - Integration points for real-time inference
+  - Streaming OHLCV data handling
+  - Risk management overlays
 
-#### Monitoring & Observability
-- ⚠️ Training progress monitoring dashboards
-- ⚠️ Inference latency tracking
-- ⚠️ Resource usage metrics
-- ⚠️ A/B testing framework
+#### Documentation & Examples
+- ⚠️ OHLCV example notebook
+  - End-to-end stock forecasting tutorial
+  - Collective normalization demonstration
+  - Directional accuracy evaluation
+- ⚠️ Financial-specific documentation
+  - OHLCV data preparation guide
+  - Custom dataset fine-tuning tutorial
 
 ### 🔮 Low Priority / Future Work
 
-#### Next-Generation Models
-- ⚠️ Latent diffusion architectures
-- ⚠️ Causal transformer improvements
-- ⚠️ Multi-modal foundation models
+#### Advanced Financial Features
+- ⚠️ Technical indicator integration
+  - Add derived features (RSI, MACD, moving averages)
+  - Custom indicator computations and normalization
+- ⚠️ Multi-asset portfolio forecasting
+  - Cross-asset correlation modeling
+  - Portfolio-level prediction and risk
+- ⚠️ Options pricing and volatility modeling
+  - Implied volatility forecasting
+  - Greeks calculation and hedging
 
-#### Enterprise Features
-- ⚠️ Scalable serving infrastructure
-- ⚠️ Cloud platform guides (AWS, GCP, Azure)
-- ⚠️ API service for remote inference
-- ⚠️ Marketplace for fine-tuned models
-
-#### Ecosystem Development
-- ⚠️ Third-party integrations
-- ⚠️ Community plugin system
-- ⚠️ Model sharing platform
+#### Enterprise Deployment
+- ⚠️ Regulatory compliance frameworks
+  - Model governance and transparency
+  - Explainability for financial decisions
+  - Audit trails for trading signals
 
 ## Known Issues
 
@@ -362,28 +374,28 @@ The MOIRAI project is in a stable, production-ready state with all core function
 ## Future Roadmap
 
 ### Q1 2026
-- [ ] Complete Moirai-2.0-R documentation
-- [ ] Benchmark Moirai-2.0-R on standard datasets
-- [ ] Improve error messages and validation
-- [ ] Expand beginner tutorials
+- [ ] Complete CollectiveOHLCScaler implementation
+- [ ] Implement SemanticAttentionBias for OHLCV relationships
+- [ ] Build Parquet OHLCV data loader
+- [ ] Develop directional accuracy evaluation framework
 
 ### Q2 2026
-- [ ] Investigate PyTorch 2.5+ compatibility
-- [ ] ONNX export for optimized CPU inference
-- [ ] Model quantization research
-- [ ] Community contribution guidelines
+- [ ] Create OHLCV forecasting example notebook
+- [ ] Implement backtesting framework for trading signals
+- [ ] Add trading platform API integrations
+- [ ] Develop curriculum learning for financial fine-tuning
 
 ### Q3 2026
-- [ ] Explore multi-modal extensions
-- [ ] Investigate streaming inference
-- [ ] Enhanced monitoring and observability
-- [ ] Cloud platform deployment guides
+- [ ] Explore technical indicator integration
+- [ ] Investigate multi-asset portfolio forecasting
+- [ ] Enhanced evaluation with market regime awareness
+- [ ] Real-time inference pipeline development
 
 ### Q4 2026
-- [ ] Next-generation model research
-- [ ] Enterprise feature development
-- [ ] Plugin system for extensions
-- [ ] Model marketplace exploration
+- [ ] Regulatory compliance frameworks
+- [ ] Model explainability for financial deployments
+- [ ] Enterprise monitoring and audit logging
+- [ ] Advanced options pricing and volatility modeling
 
 ## Metrics & KPIs
 

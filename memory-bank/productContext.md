@@ -4,31 +4,33 @@
 
 ### The Problem
 
-Traditional time series forecasting approaches suffer from several fundamental limitations:
+Financial market prediction faces unique challenges that general-purpose time series models fail to address adequately:
 
-1. **Dataset-Specific Models**: Most forecasting models require training on each individual dataset, making them impractical for real-world scenarios where organizations need to forecast thousands of different time series across domains.
+1. **OHLCV Semantic Complexity**: Traditional models don't understand that Open, High, Low, Close prices represent the same underlying asset during a time period and should be analyzed collectively.
 
-2. **Frequency Dependence**: Models trained on one frequency (e.g., hourly data) fail to generalize to other frequencies (e.g., daily, monthly), requiring separate models for each frequency.
+2. **Normalization Challenges**: OHLC prices should be normalized together, but Volume requires separate normalization due to its different distribution characteristics.
 
-3. **Multivariate Complexity**: Handling varying numbers of variables requires different model architectures, preventing a unified approach.
+3. **Directional Focus**: Market traders care more about price direction (up/down) than exact price predictions, unlike most forecasting applications.
 
-4. **Resource Intensive**: Training specialized models for each use case requires significant computational resources and ML expertise.
+4. **Market Noise**: High-frequency data contains significant noise, requiring models that can extract meaningful signals from volatile price movements.
 
-5. **Expert Knowledge Barrier**: Effective forecasting typically requires domain experts to select appropriate models, features, and hyperparameters.
+5. **Regime Awareness**: Financial markets exhibit different behaviors in bull, bear, and sideways conditions that general models don't recognize.
+
+6. **Corporate Actions**: Stock splits, dividends, and mergers create discontinuous price jumps that confuse standard time series models.
 
 ### The Solution
 
-MOIRAI addresses these challenges by:
+StockMarket-MOIRAI addresses financial forecasting challenges by specializing the universal MOIRAI foundation model:
 
-1. **Universal Pre-training**: Training on a massive, diverse dataset (LOTSA with 27B observations) to learn universal time series patterns that generalize across domains.
+1. **Fine-tuned Foundation Model**: Leveraging the powerful MOIRAI architecture pre-trained on diverse time series, then adapting it specifically for financial data.
 
-2. **Frequency Agnostic**: Multi-patch size projection layers enable handling any frequency from yearly to second-level without architectural changes.
+2. **Collective OHLC Normalization**: `CollectiveOHLCScaler` normalizes Open, High, Low, Close prices with shared statistics while handling Volume separately.
 
-3. **Any-Variate Support**: Binary attention bias mechanism allows handling unlimited variables without fixed-dimensional embeddings.
+3. **Semantic Attention Bias**: `SemanticAttentionBias` enables the model to understand relationships between OHLCV components (Close price driven by price bars, volume provides context).
 
-4. **Zero-Shot Deployment**: Pre-trained models can be deployed immediately without task-specific training, dramatically reducing time-to-production.
+4. **Directional Optimization**: Focus on directional accuracy metrics and loss functions prioritizing prediction of price movement direction over exact values.
 
-5. **Probabilistic Flexibility**: Mixture distribution heads handle diverse data characteristics (counts, skewed distributions, stable series) automatically.
+5. **Financial-Specific Architecture**: Adapts mixture distributions and masked encoder training to financial market characteristics and trading horizons.
 
 ### Market Need
 
@@ -106,73 +108,72 @@ The model generates probabilistic forecasts by sampling from the predicted mixtu
 
 ## User Experience Goals
 
-### Researchers
+### Quantitative Analysts
 
-**Goal**: Enable rapid experimentation with universal time series forecasting
-
-**Experience**:
-- Easy installation: `pip install uni2ts`
-- Pre-trained models ready for zero-shot evaluation
-- Comprehensive benchmarking tools
-- Extensible architecture for novel research
-
-### Data Scientists
-
-**Goal**: Provide production-ready forecasting without ML expertise
+**Goal**: Provide sophisticated stock price prediction tools for professional traders
 
 **Experience**:
-- Simple API: Load model, pass data, get forecasts
-- Automatic handling of frequencies and multivariate data
-- Built-in evaluation metrics
-- Clear visualization tools
+- Specialized OHLCV forecasting with directional accuracy metrics
+- Easy fine-tuning on custom financial datasets
+- Backtesting integration for strategy validation
+- GPU-optimized inference for real-time trading signals
 
-### Engineers
+### Algorithmic Traders
 
-**Goal**: Integrate forecasting into production systems
-
-**Experience**:
-- Stable, well-tested codebase
-- Batch inference capabilities
-- Model versioning via HuggingFace Hub
-- Clear documentation for deployment
-
-### Students
-
-**Goal**: Learn advanced time series forecasting techniques
+**Goal**: Enable development of ML-powered trading strategies
 
 **Experience**:
-- Clear code structure with extensive type hints
-- Jupyter notebook examples
-- Step-by-step tutorials
-- Links to research papers
+- Python API for programmatic strategy development
+- OHLCV data pipeline with automatic preprocessing
+- Directional focus prioritizing profitable trade signals
+- Integration with popular trading platforms and APIs
+
+### Financial Data Scientists
+
+**Goal**: Accelerate financial ML research and development
+
+**Experience**:
+- Collective OHLC normalization handling
+- Semantic attention bias for multi-variate relationships
+- Comprehensive financial evaluation metrics
+- Modular architecture for extending with technical indicators
+
+### Fintech Engineers
+
+**Goal**: Build reliable financial prediction systems
+
+**Experience**:
+- Production-ready codebase with type safety
+- CLI tools optimized for financial workflows
+- Model versioning and deployment via HuggingFace Hub
+- Clear documentation with trading-specific examples
 
 ## Key Features
 
-### 1. Zero-Shot Forecasting
-- No training required for new datasets
-- Competitive with task-specific models
-- Immediate deployment possible
+### 1. Financial Specialization
+- Fine-tuned MOIRAI foundation model for OHLCV data
+- Collective normalization for OHLC prices
+- Semantic understanding of financial relationships
 
-### 2. Universal Coverage
-- Any frequency: Yearly to second-level
-- Any variates: Univariate to highly multivariate
-- Any domain: Energy, transport, climate, finance, healthcare, etc.
+### 2. OHLCV-Centric Architecture
+- Handles 5-minute to daily financial data
+- Optimized for Close price prediction using full OHLCV context
+- Individual Volume processing separate from price data
 
-### 3. Probabilistic Predictions
-- Full distributional forecasts
-- Quantile predictions for risk assessment
-- Confidence intervals automatically provided
+### 3. Directional Focus
+- Directional accuracy metrics for trading applications
+- Market regime awareness (bull/bear/sideways conditions)
+- Prioritization of price movement over exact values
 
 ### 4. Flexible Deployment
-- CLI tools for batch processing
-- Python API for programmatic usage
-- GluonTS integration for compatibility
+- CLI tools optimized for financial workflows
+- Python API for trading strategy development
+- GluonTS integration with backtesting frameworks
 
-### 5. Comprehensive Evaluation
-- Standard metrics: MSE, MASE, CRPS
-- Benchmark suites: Monash, LSF, PF
-- Rolling window evaluation
-- Comparison with baselines
+### 5. Financial Evaluation
+- Directional accuracy (>50% baseline)
+- Market-aware validation (regime-specific performance)
+- Backtesting integration for trading strategy validation
 
 ## Success Metrics
 
