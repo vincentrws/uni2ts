@@ -99,6 +99,7 @@ class MoiraiModule(
         attn_dropout_p: float,
         dropout_p: float,
         scaling: bool = True,
+        ohlcv: bool = False,
     ):
         """
         :param distr_output: distribution output object
@@ -109,6 +110,7 @@ class MoiraiModule(
         :param attn_dropout_p: dropout probability for attention layers
         :param dropout_p: dropout probability for all other layers
         :param scaling: whether to apply scaling (standardization)
+        :param ohlcv: whether to use specialized OHLCV scaler
         """
         super().__init__()
         self.d_model = d_model
@@ -118,7 +120,14 @@ class MoiraiModule(
         self.scaling = scaling
 
         self.mask_encoding = nn.Embedding(num_embeddings=1, embedding_dim=d_model)
-        self.scaler = PackedStdScaler() if scaling else PackedNOPScaler()
+        if ohlcv:
+            from uni2ts.module.packed_scaler import OHLCVPackedScaler
+            self.scaler = OHLCVPackedScaler(verbose=False)
+        elif scaling:
+            self.scaler = PackedStdScaler()
+        else:
+            self.scaler = PackedNOPScaler()
+
         self.in_proj = MultiInSizeLinear(
             in_features_ls=patch_sizes,
             out_features=d_model,

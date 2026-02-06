@@ -163,7 +163,7 @@ cython_debug/
 #.idea/
 
 # Custom ignores for project-specific data folders
-data/
+/data
 dataset/
 custom_data/
 outputs/

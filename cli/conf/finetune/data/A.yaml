@@ -1,0 +1,9 @@
+_target_: uni2ts.data.builder.simple.generate_finetune_builder
+dataset: A
+train_length: 2150836
+prediction_length: ???
+context_length: ???
+patch_size: ???
+mode: ???
+distance: 96
+

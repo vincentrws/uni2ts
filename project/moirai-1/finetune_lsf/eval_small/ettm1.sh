@@ -11,10 +11,10 @@ ps=128
 mode=S
 
 
-cpp1=''
-cpp2=''
-cpp3=''
-cpp4=''
+cpp1='outputs/finetune/lsf_S/moirai_1.0_R_small/full/ettm1/cl4000_pl96/checkpoints/epoch_3-step_1668.ckpt'
+cpp2='outputs/finetune/lsf_S/moirai_1.0_R_small/full/ettm1/cl4000_pl192/checkpoints/epoch_1-step_832.ckpt'
+cpp3='outputs/finetune/lsf_S/moirai_1.0_R_small/full/ettm1/cl4000_pl336/checkpoints/epoch_0-step_414.ckpt'
+cpp4='outputs/finetune/lsf_S/moirai_1.0_R_small/full/ettm1/cl4000_pl720/checkpoints/epoch_0-step_408.ckpt'
 
 index=1
 for pl in 96 192 336 720; do

@@ -6,13 +6,16 @@ As of January 2026, the StockMarket-MOIRAI project is focused on adapting the un
 
 ### Active Projects
 
-#### 1. GroupedPackedStdScaler Implementation
-- **Status**: Completed (January 2026)
-- **Problem**: MOIRAI's PackedStdScaler normalizes each variate independently, but OHLC should be normalized collectively
-- **Solution**: Implemented `GroupedPackedStdScaler` that computes collective mean/std across arbitrarily grouped variates using a group partition mapping
+#### 1. OHLCV Normalization (Collective Scaling)
+- **Status**: Completed (February 2026)
+- **Problem**: MOIRAI's PackedStdScaler normalizes each variate independently, but financial OHLC prices share the same unit and range, necessitating collective normalization to preserve their relative relationships.
+- **Solution**: 
+    - Implemented `GroupedPackedStdScaler` for arbitrary variate grouping.
+    - Implemented specialized `OHLCVPackedScaler` for financial data.
+    - Verified that including **Close** in the OHLC collective group (Group 0) correctly scales all four price components using the same statistics, while Volume (Group 1) and time features (Groups 7, 8) are scaled appropriately.
 - **Location**: `src/uni2ts/module/packed_scaler.py`
-- **Tests**: Comprehensive test coverage in `test/module/test_packed_scaler.py` including specific OHLCV configuration
-- **Usage**: `GroupedPackedStdScaler(torch.tensor([0, 0, 0, 0, 1]))` groups the first 4 variates (OHLC) together for collective normalization, while the 5th (Volume) remains independent.
+- **Tests**: `test/module/test_packed_scaler.py` and `notebooks/4_ohlcv_with_close_test.ipynb`.
+- **Key Insight**: Grouping OHLC (40 positions in a 10-step window) ensures price consistency across variates.
 
 #### 2. SemanticAttentionBias for OHLCV
 - **Status**: Planned (January 2026)
@@ -26,11 +29,35 @@ As of January 2026, the StockMarket-MOIRAI project is focused on adapting the un
 - **Solution**: Add directional component to loss function with configurable weight
 - **Metrics**: Directional accuracy (>50% baseline), market regime awareness
 
-#### 4. OHLCV Data Pipeline
-- **Status**: Active (January 2026)
-- **Challenge**: 5-minute OHLCV data with market gaps, corporate actions, missing bars
-- **Solutions**: Parquet support, gap filling, action adjustments, validation
-- **Focus**: Robust preprocessing pipeline for financial data quality
+#### 4. OHLCV Data Pipeline & Model Integration
+- **Status**: Completed (February 2026)
+- **Challenge**: Seamlessly integrating custom data packing and scaling into the MOIRAI training workflow.
+- **Solutions**:
+  - **Standard Pipeline Adaptation**: Utilized the standard `FinetuneDataset` and `FinetunePatchCrop` pipeline instead of a custom loader for maximum compatibility with the existing training infrastructure.
+  - **Data Builder**: Created `src/uni2ts/data/builder/turn_parquet_csv.py` to prepare CSVs with all 7 variates (OHLCV + Time Features) pre-calculated.
+  - **Custom Packing**: `OHLCVPackedScaler` handles the logic of grouping OHLC variates together for collective scaling.
+  - **Custom Module**: Created `OHLCVMoiraiModule` (`src/uni2ts/model/moirai/custom_module.py`) to integrate the standard pipeline with `OHLCVPackedScaler`.
+- **Key Implementation Details**:
+  - **Data Flow**: Parquet → CSV (with time features) → HuggingFace Dataset → FinetuneDataset → FinetunePatchCrop → Batch.
+  - **Windowing**: `FinetunePatchCrop` handles sliding window creation dynamically based on `train_length`, `context_length`, and `distance`.
+  - **Scaling**: `OHLCVPackedScaler` applies collective normalization to OHLC groups and individual normalization to Volume and Time features.
+- **Documentation**: Detailed walkthrough available in `docs/fine_tune_process.md`.
+- **Features**:
+  - Direct compatibility with PyTorch DataLoaders.
+  - Efficient on-the-fly windowing (no massive pre-cropped dataset storage).
+  - Preserves `create_hf_dataset` for backward compatibility/caching.
+- **Usage**:
+  ```python
+  # Loader
+  loader = OHLCVLoader(
+      data_path='...',
+      window_size=512,
+      stride=512
+  )
+  
+  # Hydra Config
+  # _target_: uni2ts.model.moirai.custom_module.OHLCVMoiraiModule
+  ```
 
 ## Recent Changes
 
@@ -73,13 +100,13 @@ As of January 2026, the StockMarket-MOIRAI project is focused on adapting the un
 
 ### Immediate Priorities (Q1 2026)
 
-1. **CollectiveOHLCScaler Implementation**
-   - Complete `CollectiveOHLCScaler` class in `packed_scaler.py`
-   - Integrate into MOIRAI data pipeline
-   - Test with actual OHLCV data samples
+1. **Model Integration of OHLCV Scaler**
+   - Integrate `OHLCVPackedScaler` into MOIRAI fine-tuning module
+   - Update Hydra configs to use specialized scaler for financial tasks
+   - Test end-to-end training loop with OHLCV data samples
    - Document usage patterns for financial data
 
-2. **OHLCV Data Pipeline Development**
+2. **OHLCV Data Pipeline Enhancements**
    - Implement Parquet file loader with column validation
    - Add corporate action handling (splits, dividends)
    - Create market gap filling strategies
